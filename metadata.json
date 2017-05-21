@@ -1,0 +1,17 @@
+{
+  "name" : "Eighty/20 Results - Member Cancellation Policy for Paid Memberships Pro",
+  "slug" : "e20r-member-cancellation-policy",
+  "download_url" : "https://eighty20results.com/protected-content/e20r-member-cancellation-policy/e20r-member-cancellation-policy-1.0.zip",
+  "version" : "1.0",
+  "tested": "4.7.5",
+  "requires": "4.7",
+  "author" : "Thomas Sjolshagen <thomas@eighty20results.com>",
+  "author_homepage": "https://eighty20results.com/thomas-sjolshagen",
+  "last_updated": "2017-05-21 13:30:00",
+  "homepage": "https://eighty20results.com/wordpress-plugins/e20r-member-cancellation-policy/",
+  "sections" : {
+    "description" : "Adds a membership level setting to configure how PMPro will handle membership cancellations.",
+    "changelog": "<div>This change log contains information about the updates/modifications/fixes created for this add-on.</div>",
+    "faq": "<h3>I found a bug in the plugin.</h3>Please report your issue to us by using the <a href='https://eighty20results.com/support-forums/forum/support-forums/e20r-member-cancellation-policy/' target='_blank'>Support Forum</a> on The Eighty / 20 Website, where we try to respond within 1 business day."
+    }
+}
