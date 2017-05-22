@@ -3,7 +3,7 @@
 Plugin Name: E20R Member Cancellation Policy for Paid Memberships Pro
 Plugin URI: http://eighty20results.com/wordpress-plugins/e20r-member-cancellation-policy
 Description: Adds a membership level setting to configure how PMPro will handle membership cancellations.
-Version: 1.1
+Version: 1.3
 Requires: 4.7
 Author: Thomas Sjolshagen <thomas@eighty20results.com>
 Author URI: http://www.eighty20results.com/thomas-sjolshagen/
@@ -30,7 +30,7 @@ Text Domain: e20r-member-cancellation-policy
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-define( 'E20R_MEMBER_CANCELLATION_POLICY', '1.1' );
+define( 'E20R_MEMBER_CANCELLATION_POLICY', '1.3' );
 
 class E20R_Member_Cancellation {
 	
@@ -274,12 +274,35 @@ class E20R_Member_Cancellation {
 				'cancellation_email_body',
 			) )
 		) {
-			
+			// add_filter('pmpro_account_membership_expiration_text', array( $this, 'change_expiration_text', 10, 2 ) );
+			add_filter( 'gettext', array( $this, 'change_expiration_header' ), 10, 3 );
 			add_filter( 'pmpro_email_body', array( $this, 'cancellation_email_body' ), 10, 2 );
 		}
 	}
 	
-	
+	/**
+     * Change the status header for the user's membership that's ending due to policy setting
+     *
+	 * @param $translated
+	 * @param $text
+	 * @param $domain
+	 *
+	 * @return mixed|string
+	 */
+    public function change_expiration_header( $translated, $text, $domain ) {
+        
+        if ( is_user_logged_in() && ( $domain == 'paid-memberships-pro' || $domain == 'pmpro' ) && ( $text == 'Expiration' ) ) {
+            
+            $level = pmpro_getMembershipLevelForUser();
+            
+            if ( !empty( $level->enddate ) ) {
+	            $translated = __( 'Ends', 'e20r-member-cancellation-policy' );
+            }
+        }
+        
+        return $translated;
+    }
+    
 	/**
 	 * Generate the level setting HTML
 	 */
