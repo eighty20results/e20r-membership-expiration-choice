@@ -33,7 +33,7 @@ Text Domain: e20r-member-cancellation-policy
 define( 'E20R_MEMBER_CANCELLATION_POLICY', '1.0' );
 
 class E20R_Member_Cancellation {
-	
+ 
 	/**
 	 * @var array Settings for the expiration choice
 	 */
@@ -60,19 +60,21 @@ class E20R_Member_Cancellation {
 		$plugin->load_filters();
 
 		add_action( 'init', array( $plugin, 'load_translation' ) );
+		add_action( 'admin_enqueue_scripts', array( $plugin, 'load_css' ) );
+		add_action( 'wp_enqueue_scripts', array( $plugin, 'load_css' ) );
 		
         add_action( 'pmpro_membership_level_after_other_settings', array( $plugin, 'add_level_settings' ) );
 		add_action( 'pmpro_save_membership_level', array( $plugin, 'save_level_settings' ) );
 		add_action( 'pmpro_delete_membership_level', array( $plugin, 'delete_level_settings' ) );
 
-		if ( 'end_of_period' === $plugin->get_setting( 'termination_choice' ) &&
+		if ( 'end_of_period' === $plugin->get_setting( 'termination-choice' ) &&
 		     ! has_action( 'pmpro_after_change_membership_level', array( $plugin, 'after_change_membership_level' ) )
 		) {
 
 			add_action( 'pmpro_after_change_membership_level', array( $plugin, 'after_change_membership_level' ), 10, 2 );
 		}
 
-		if ( 'end_of_period' === $plugin->get_setting( 'termination_choice' ) &&
+		if ( 'end_of_period' === $plugin->get_setting( 'termination-choice' ) &&
 		     ! has_action( 'pmpro_before_change_membership_level', array( $plugin, 'before_change_membership_level' ) )
 		) {
 
@@ -81,6 +83,13 @@ class E20R_Member_Cancellation {
 
 	}
 	
+	public function load_css() {
+	    
+	    if ( is_admin() ) {
+		    wp_enqueue_style( 'e20r-member-cancellation-policy', plugins_url( 'css/e20r-member-cancellation-policy.css', __FILE__ ), null, E20R_MEMBER_CANCELLATION_POLICY );
+	    }
+    }
+    
 	/**
      * Save settings when saving membership level
      *
@@ -89,7 +98,7 @@ class E20R_Member_Cancellation {
 	public function save_level_settings( $level_id ) {
 
 		foreach ( $_REQUEST as $key => $value ) {
-
+      
 			if ( false !== strpos( $key, 'e20r-cancellation-policy_' ) ) {
 
 				$rk_arr = explode( '_', $key );
@@ -129,8 +138,12 @@ class E20R_Member_Cancellation {
 			$this->settings = $this->default_settings();
 		}
 
+		if ( !isset( $this->settings[ $level_id ] ) && $level_id !== 'default' ) {
+		    $this->settings[ $level_id ] = $this->settings['default'];
+        }
+        
 		// Append the settings array for the level ID if it doesn't exits
-		if ( ! is_array( $this->settings[ $level_id ] ) ) {
+		if ( isset( $this->settings[ $level_id ] ) && ! is_array( $this->settings[ $level_id ] ) ) {
 			$this->settings[ $level_id ] = array();
 		}
 
@@ -168,7 +181,7 @@ class E20R_Member_Cancellation {
 
 		return array(
 			'default' => array(
-				'termination_choice' => apply_filters( 'e20r-member-cancellation-policy', 'end_of_period' ),
+				'termination-choice' => apply_filters( 'e20r-member-cancellation-policy', 'end_of_period' ),
 			),
 		);
 	}
@@ -186,7 +199,12 @@ class E20R_Member_Cancellation {
 		if ( empty( $this->settings ) ) {
 			$this->settings = get_option( 'e20r_cancellation_policy', $this->default_settings() );
 		}
-
+  
+		if ( ! isset( $this->settings[$level_id][$key]) ) {
+		    $this->settings[$level_id] = array();
+		    $this->settings[$level_id]['termination-choice'] = apply_filters( 'e20r-member-cancellation-policy', 'end_of_period' );
+        }
+        
 		return ( isset( $this->settings[ $level_id ][ $key ] ) ? $this->settings[ $level_id ][ $key ] : null );
 	}
 
@@ -214,7 +232,7 @@ class E20R_Member_Cancellation {
 	 */
 	public function load_filters() {
   
-		if ( 'end_of_period' === $this->get_setting( 'termination_choice' ) && ! has_filter( 'pmpro_email_body', array(
+		if ( 'end_of_period' === $this->get_setting( 'termination-choice' ) && ! has_filter( 'pmpro_email_body', array(
 				$this,
 				'cancellation_email_body'
 			) )
