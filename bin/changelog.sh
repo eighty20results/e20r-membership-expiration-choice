@@ -24,7 +24,7 @@ changelog_source=${readme_path}current.txt
 incomplete_out=tmp.txt
 json_out=json_changelog.txt
 readme_out=readme_changelog.txt
-version=$(egrep "^Version:" ../class.${short_name}.php | sed 's/[[:alpha:]|(|[:space:]|\:]//g' | awk -F- '{printf "%s", $1}')
+version=$(egrep "^Version:" ../${short_name}.php | sed 's/[[:alpha:]|(|[:space:]|\:]//g' | awk -F- '{printf "%s", $1}')
 json_header="<h3>${version}</h3><ol>"
 json_footer="</ol>"
 readme_header="== ${version} =="
