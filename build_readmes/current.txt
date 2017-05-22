@@ -1,0 +1,1 @@
+ENHANCEMENT/FIX: Change the Account "Expiration" header to "Ends" if the policy is "end of period" and the user's membership has an enddate
