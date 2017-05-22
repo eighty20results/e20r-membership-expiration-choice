@@ -55,6 +55,12 @@ class E20R_Member_Cancellation {
 	 * Loads an instance of the plugin and configures key actions,.
 	 */
 	public static function register() {
+  
+		$current_user_level = null;
+		
+		if ( ! is_user_logged_in() ) {
+			return;
+		}
 		
 		if ( ! function_exists( 'pmpro_getAllLevels' ) ) {
 			return;
@@ -65,7 +71,6 @@ class E20R_Member_Cancellation {
 		}
 		
 		$plugin = self::$instance;
-		$plugin->load_filters();
 		
 		add_action( 'init', array( $plugin, 'load_translation' ) );
 		add_action( 'admin_enqueue_scripts', array( $plugin, 'load_css' ) );
@@ -75,26 +80,43 @@ class E20R_Member_Cancellation {
 		add_action( 'pmpro_save_membership_level', array( $plugin, 'save_level_settings' ) );
 		add_action( 'pmpro_delete_membership_level', array( $plugin, 'delete_level_settings' ) );
 		
-		if ( 'end_of_period' === $plugin->get_setting( 'termination-choice' ) &&
-		     ! has_action( 'pmpro_after_change_membership_level', array( $plugin, 'after_change_membership_level' ) )
-		) {
-			
-			add_action( 'pmpro_after_change_membership_level', array(
-				$plugin,
-				'after_change_membership_level',
-			), 10, 2 );
-		}
+		$current_user_level = pmpro_getMembershipLevelForUser();
 		
-		if ( 'end_of_period' === $plugin->get_setting( 'termination-choice' ) &&
-		     ! has_action( 'pmpro_before_change_membership_level', array( $plugin, 'before_change_membership_level' ) )
-		) {
+		if ( is_user_logged_in() && ! empty( $current_user_level->id ) ) {
 			
-			add_action( 'pmpro_before_change_membership_level', array(
-				$plugin,
-				'before_change_membership_level',
-			), 10, 2 );
+			$plugin->load_filters( $current_user_level->id );
+			
+			if ( 'end_of_period' === $plugin->get_setting( 'termination-choice', $current_user_level->id ) &&
+			     ! has_action( 'pmpro_after_change_membership_level', array(
+				     $plugin,
+				     'after_change_membership_level'
+			     ) )
+			) {
+				if ( WP_DEBUG ) {
+					error_log( "Adding after change action for membership level {$current_user_level->id} w/end_of_period termination policy" );
+				}
+				
+				add_action( 'pmpro_after_change_membership_level', array(
+					$plugin,
+					'after_change_membership_level',
+				), 10, 2 );
+			}
+			
+			if ( 'end_of_period' === $plugin->get_setting( 'termination-choice', $current_user_level->id ) &&
+			     ! has_action( 'pmpro_before_change_membership_level', array(
+				     $plugin,
+				     'before_change_membership_level'
+			     ) )
+			) {
+				if ( WP_DEBUG ) {
+					error_log( "Adding before change action for membership level {$current_user_level->id} w/end_of_period termination policy" );
+				}
+				add_action( 'pmpro_before_change_membership_level', array(
+					$plugin,
+					'before_change_membership_level',
+				), 10, 2 );
+			}
 		}
-		
 	}
 	
 	public function load_css() {
@@ -245,9 +267,9 @@ class E20R_Member_Cancellation {
 	/**
 	 * Load filter hooks we'll need to use
 	 */
-	public function load_filters() {
+	public function load_filters( $level_id = null ) {
 		
-		if ( 'end_of_period' === $this->get_setting( 'termination-choice' ) && ! has_filter( 'pmpro_email_body', array(
+		if ( 'end_of_period' === $this->get_setting( 'termination-choice', $level_id ) && ! has_filter( 'pmpro_email_body', array(
 				$this,
 				'cancellation_email_body',
 			) )
@@ -373,12 +395,16 @@ class E20R_Member_Cancellation {
 			// Search the databas for the most recent order object
 			$order = new MemberOrder();
 			$order->getLastMemberOrder( $user_id, "cancelled" );
-			
+   
 			// Nothing to do if there's no order found
 			if ( empty( $order->id ) ) {
 				return false;
 			}
 			
+			if ( WP_DEBUG ) {
+			    error_log("Most recent member order: " . print_r( $order, true ) );
+            }
+            
 			// Fetch the most recent membership level definition for the user
 			$sql = $wpdb->prepare( "
 				SELECT * 
@@ -393,8 +419,12 @@ class E20R_Member_Cancellation {
 			
 			$level = $wpdb->get_row( $sql );
 			
+			if ( WP_DEBUG ) {
+			    error_log("Last membership level for {$user_id}: " . print_r( $level, true ));
+            }
+            
 			// Return error if the last level wasn't a recurring one
-			if ( isset( $level->cycle_number ) && $level->cycle_number >= 1 ) {
+			if ( ! isset( $level->cycle_number ) && $level->cycle_number < 1 ) {
 				return false;
 			}
 			
@@ -405,8 +435,7 @@ class E20R_Member_Cancellation {
 			
 			// Format the date string for the the last time the order was processed
 			$lastdate = date_i18n( "Y-m-d", $order->timestamp );
-			
-			
+   
 			/**
 			 * Find the timestamp indicating when the next payment is supposed to occur
 			 * For PayPal Express and Stripe, we'll use their native gateway look-up functionality
@@ -416,19 +445,25 @@ class E20R_Member_Cancellation {
 				// Stripe or PayPal would have configured this global
 				$next_payment = $pmpro_next_payment_timestamp;
 				
-			} else {
+			} else if ( $level->cycle_number > 0 && ! empty( $level->cycle_period ) && empty( $pmpro_next_payment_timestamp ) ) {
 				
 				// Calculate when the next scheduled payment is estimated to happen
-				$nextdate_sql = $wpdb->prepare( "
-					SELECT 
-						UNIX_TIMESTAMP( %s + INTERVAL %d {$level->cycle_period})
-					",
+				$nextdate_sql = $wpdb->prepare( "SELECT UNIX_TIMESTAMP( %s + INTERVAL %d {$level->cycle_period})",
 					$lastdate,
 					intval( $level->cycle_number )
 				);
 				
 				$next_payment = $wpdb->get_var( $nextdate_sql );
-			}
+				
+			} else {
+			    
+			    // No recurring payment info found!
+			    return;
+            }
+			
+			if ( WP_DEBUG) {
+			    error_log("Next payment date for {$user_id} should be: {$next_payment}");
+            }
 			
 			/**
 			 * Process this if the next payment date is in the future
