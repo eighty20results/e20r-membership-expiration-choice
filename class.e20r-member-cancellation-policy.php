@@ -36,13 +36,13 @@ use E20R\Member_Cancellation\Utilities\Utilities;
 
 define( 'E20R_MEMBER_CANCELLATION_POLICY', '1.4' );
 
-if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
-	class E20R_Member_Cancellation {
+if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation_Policy' ) ) {
+	class E20R_Member_Cancellation_Policy {
 		
 		const plugin_slug = 'e20r-member-cancellation-policy';
 		
 		/**
-		 * @var null|E20R_Member_Cancellation
+		 * @var null|E20R_Member_Cancellation_Policy
 		 */
 		private static $instance = null;
 		
@@ -51,22 +51,46 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 		 */
 		private $settings;
 		
+		private $user_level = array();
+		
+		private $subscription_label_singular = null;
+		private $subscription_label_plural = null;
+		
 		/**
-		 * E20R_Member_Cancellation constructor.
+		 * E20R_Member_Cancellation_Policy constructor.
 		 */
 		public function __construct() {
 			
-			$slug = apply_filters( 'e20r-licensing-text-domain', E20R_Member_Cancellation::plugin_slug );
+			$slug                              = apply_filters( 'e20r-licensing-text-domain', E20R_Member_Cancellation_Policy::plugin_slug );
+			$this->subscription_label_singular = apply_filters( 'e20r-member-cancellation-subscription-label-singular', __( "Subscription", E20R_Member_Cancellation_Policy::plugin_slug ) );
+			$this->subscription_label_plural   = apply_filters( 'e20r-member-cancellation-subscription-label-plural', __( "Subscriptions", E20R_Member_Cancellation_Policy::plugin_slug ) );
+			
 		}
 		
+		/**
+		 * @return E20R_Member_Cancellation_Policy|null
+		 */
+		public static function get_instance() {
+		    
+		    if ( is_null( self::$instance ) ) {
+		        self::$instance = new self;
+		        self::register();
+            }
+            
+            return self::$instance;
+        }
+        
 		/**
 		 * Loads an instance of the plugin and configures key actions,.
 		 */
 		public static function register() {
 			
 			$current_user_level = null;
+			$util = Utilities::get_instance();
 			
-			if ( ! is_user_logged_in() ) {
+			global $current_user;
+			
+			if ( function_exists('is_user_logged_in' ) && ! is_user_logged_in() ) {
 				return;
 			}
 			
@@ -90,7 +114,8 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 			
 			add_filter( 'e20r-licensing-text-domain', array( $plugin, 'set_plugin_slug' ) );
 			
-			$current_user_level = pmpro_getMembershipLevelForUser();
+			$plugin->set_user_level( $current_user->ID, pmpro_getMembershipLevelForUser( $current_user->ID ) );
+			$current_user_level = $plugin->get_user_level( $current_user->ID );
 			
 			if ( is_user_logged_in() && ! empty( $current_user_level->id ) ) {
 				
@@ -102,9 +127,7 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 					     'after_change_membership_level',
 				     ) )
 				) {
-					if ( WP_DEBUG ) {
-						error_log( "Adding after change action for membership level {$current_user_level->id} w/end_of_period termination policy" );
-					}
+					$util->log( "Adding after change action for membership level {$current_user_level->id} w/end_of_period termination policy" );
 					
 					add_action( 'pmpro_after_change_membership_level', array(
 						$plugin,
@@ -118,9 +141,8 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 					     'before_change_membership_level',
 				     ) )
 				) {
-					if ( WP_DEBUG ) {
-						error_log( "Adding before change action for membership level {$current_user_level->id} w/end_of_period termination policy" );
-					}
+                    $util->log( "Adding before change action for membership level {$current_user_level->id} w/end_of_period termination policy" );
+                    
 					add_action( 'pmpro_before_change_membership_level', array(
 						$plugin,
 						'before_change_membership_level',
@@ -130,11 +152,34 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 		}
 		
 		/**
+         * Save the active user level definition for the specific user ID
+         *
+		 * @param int $user_id
+		 * @param \stdClass $level
+		 */
+		private function set_user_level( $user_id, $level ) {
+			$this->user_level[ $user_id ] = $level;
+		}
+		
+		/**
+         * Currently saved/active Membership Level definition for the user ID
+         *
+		 * @param int $user_id
+		 *
+		 * @return \stdClass|null
+		 */
+		private function get_user_level( $user_id ) {
+			
+			return isset( $this->user_level[ $user_id ] ) ? $this->user_level[ $user_id ] : null;
+		}
+		
+		/**
 		 * Update the plugin slug for translations, etc.
+         *
 		 * @return string
 		 */
 		public function set_plugin_slug() {
-			return E20R_Member_Cancellation::plugin_slug;
+			return E20R_Member_Cancellation_Policy::plugin_slug;
 		}
 		
 		/**
@@ -239,7 +284,7 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 			
 			return array(
 				'default' => array(
-					'termination-choice'    => apply_filters( 'e20r-member-cancellation-policy', 'end_of_period' ),
+					'termination-choice'    => apply_filters( 'e20r-member-cancellation-policy-default', 'end_of_period' ),
 					'delete-inactive-users' => apply_filters( 'e20r-member-cancellation-deletion', false ),
 				),
 			);
@@ -261,7 +306,7 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 			
 			if ( ! isset( $this->settings[ $level_id ][ $key ] ) ) {
 				$this->settings[ $level_id ]                       = array();
-				$this->settings[ $level_id ]['termination-choice'] = apply_filters( 'e20r-member-cancellation-policy', 'end_of_period' );
+				$this->settings[ $level_id ]['termination-choice'] = apply_filters( 'e20r-member-cancellation-policy-default', 'end_of_period' );
 			}
 			
 			return ( isset( $this->settings[ $level_id ][ $key ] ) ? $this->settings[ $level_id ][ $key ] : null );
@@ -272,18 +317,18 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 		 */
 		public function load_translation() {
 			
-			$locale = apply_filters( "plugin_locale", get_locale(), E20R_Member_Cancellation::plugin_slug );
-			$mo     = E20R_Member_Cancellation::plugin_slug . "-{$locale}.mo";
+			$locale = apply_filters( "plugin_locale", get_locale(), E20R_Member_Cancellation_Policy::plugin_slug );
+			$mo     = E20R_Member_Cancellation_Policy::plugin_slug . "-{$locale}.mo";
 			
 			//paths to local (plugin) and global (WP) language files
 			$local_mo  = plugin_dir_path( __FILE__ ) . "/languages/{$mo}";
-			$global_mo = WP_LANG_DIR . "/" . E20R_Member_Cancellation::plugin_slug . "/{$mo}";
+			$global_mo = WP_LANG_DIR . "/" . E20R_Member_Cancellation_Policy::plugin_slug . "/{$mo}";
 			
 			//load global first
-			load_textdomain( E20R_Member_Cancellation::plugin_slug, $global_mo );
+			load_textdomain( E20R_Member_Cancellation_Policy::plugin_slug, $global_mo );
 			
 			//load local second
-			load_textdomain( E20R_Member_Cancellation::plugin_slug, $local_mo );
+			load_textdomain( E20R_Member_Cancellation_Policy::plugin_slug, $local_mo );
 		}
 		
 		/**
@@ -318,7 +363,7 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 				$level = pmpro_getMembershipLevelForUser();
 				
 				if ( ! empty( $level->enddate ) ) {
-					$translated = __( 'Ends', E20R_Member_Cancellation::plugin_slug );
+					$translated = __( 'Ends', E20R_Member_Cancellation_Policy::plugin_slug );
 				}
 			}
 			
@@ -330,30 +375,33 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 		 */
 		public function add_level_settings() {
 			
-			$level_id = isset( $_REQUEST['edit'] ) ? intval( $_REQUEST['edit'] ) : 'default';
+			$util = Utilities::get_instance();
+			
+			$level_id = $util->get_variable( 'edit', 'default' );
 			?>
             <hr/>
-            <h3 class="e20r-member-cancellation-policy-header"><?php _e( "Cancellation Policy ", E20R_Member_Cancellation::plugin_slug ); ?></h3>
+            <h3 class="e20r-member-cancellation-policy-header"><?php _e( "Cancellation Policy ", E20R_Member_Cancellation_Policy::plugin_slug ); ?></h3>
             <div class="e20r-member-cancellation-policy-settings">
                 <div class="e20r-settings-body">
                     <div class="e20r-settings-row">
                         <div class="e20r-settings-cell">
-                            <label for="e20r-cancellation-policy_termination-choice"><?php _e( "Membership is cancelled:", E20R_Member_Cancellation::plugin_slug ); ?></label>
+                            <label for="e20r-cancellation-policy_termination-choice"><?php _e( "Membership is cancelled:", E20R_Member_Cancellation_Policy::plugin_slug ); ?></label>
                         </div>
                         <div class="e20r-settings-cell">
                             <select name="e20r-cancellation-policy_termination-choice"
                                     class="e20r-cancellation-policy_termination-choice"
                                     id="e20r-cancellation-policy_termination-choice">
                                 <option
-                                        value="immediately" <?php selected( 'immediately', $this->get_setting( 'termination-choice', $level_id ) ); ?>><?php _e( "Immediately", E20R_Member_Cancellation::plugin_slug ); ?></option>
+                                        value="immediately" <?php selected( 'immediately', $this->get_setting( 'termination-choice', $level_id ) ); ?>><?php _e( "Immediately", E20R_Member_Cancellation_Policy::plugin_slug ); ?></option>
                                 <option
-                                        value="end_of_period" <?php selected( 'end_of_period', $this->get_setting( 'termination-choice', $level_id ) ); ?>><?php _e( "At the end of the billing period", E20R_Member_Cancellation::plugin_slug ); ?></option>
+                                        value="end_of_period" <?php selected( 'end_of_period', $this->get_setting( 'termination-choice', $level_id ) ); ?>><?php _e( "At the end of the billing period", E20R_Member_Cancellation_Policy::plugin_slug ); ?></option>
                             </select>
                         </div>
                     </div>
+                    <!--
                     <div class="e20r-settings-row">
                         <div class="e20r-settings-cell">
-                            <label for="e20r-cancellation-policy_delete-inactive-users"><?php _e( "Delete inactive users:", E20R_Member_Cancellation::plugin_slug ); ?></label>
+                            <label for="e20r-cancellation-policy_delete-inactive-users"><?php _e( "Delete inactive users:", E20R_Member_Cancellation_Policy::plugin_slug ); ?></label>
                         </div>
                         <div class="e20r-settings-cell">
                             <input type="checkbox" name="e20r-cancellation-policy_delete-inactive-users"
@@ -361,6 +409,7 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
                                    id="e20r-cancellation-policy_delete-inactive-users" <?php checked( true, $this->get_setting( '', $level_id ) ); ?> />
                         </div>
                     </div>
+                    -->
                 </div>
             </div>
 			<?php
@@ -377,17 +426,27 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 		 */
 		public function before_change_membership_level( $level_id, $user_id ) {
 			
-			// TODO: Add check for presence of "subscription delays" addon: pmpro_saveDCSDs()
+			
 			global $pmpro_pages;
 			global $pmpro_stripe_event;
 			global $pmpro_next_payment_timestamp;
 			
+			$util = Utilities::get_instance();
+			$from = trim( $util->get_variable( 'from', null ) );
+			
 			// Only process this hook if we're on the PMPro cancel page (and it's not triggered from the user's profile page)
-			if ( 0 == $level_id &&
-			     ( is_page( $pmpro_pages['cancel'] ) || (
-					     is_admin() && ( empty( $_REQUEST['from'] ) || 'profile' != trim( $_REQUEST['from'] ) ) )
-			     )
-			) {
+			if ( 0 == $level_id && ( is_page( $pmpro_pages['cancel'] ) || ( is_admin() && ( empty( $from ) || 'profile' != $from ) ) ) ) {
+				
+				// Check if the user is in their trial period. If so, end at the end of the trial period
+				if ( false !== ( $trial_ends_ts = $util->is_in_trial( $user_id, $level_id ) ) ) {
+					
+					$util->log( "User is in a trial period, so returning {$trial_ends_ts}" );
+					$pmpro_next_payment_timestamp = $trial_ends_ts;
+					
+					return $pmpro_next_payment_timestamp;
+				}
+				
+				$util->log( "Using 'old' way of calculating probable end time for membership..." );
 				
 				// Retrieve the last succssfully paid-for order
 				$order = new \MemberOrder();
@@ -411,10 +470,13 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 					}
 					
 				} else if ( ! empty( $order->id ) && "paypalexpress" == $order->gateway ) {
-					if ( ! empty( $_POST['next_payment_date'] ) && 'N/A' != $_POST['next_payment_date'] ) {
+					
+					$next_payment_date_str = $util->get_variable( 'next_payment_date', null );
+					
+					if ( ! empty( $next_payment_date_str ) && 'N/A' != $next_payment_date_str ) {
 						
 						// PayPal server initiated the cancellation (via their IPN hook)
-						$pmpro_next_payment_timestamp = strtotime( $_POST['next_payment_date'], current_time( 'timestamp' ) );
+						$pmpro_next_payment_timestamp = strtotime( $next_payment_date_str, current_time( 'timestamp' ) );
 					} else {
 						
 						// User initiated cancellation event, request the data from the PayPal service
@@ -441,13 +503,10 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 			global $wpdb;
 			
 			$util = Utilities::get_instance();
+			$from = trim( $util->get_variable( 'from', null ) );
 			
 			// Only process this if we're on the cancel page
-			if ( function_exists( 'pmpro_changeMembershipLevel' ) && 0 === $level_id && (
-					is_page( $pmpro_pages['cancel'] ) || (
-						is_admin() && ( empty( $_REQUEST['from'] ) || 'profile' != $_REQUEST['from'] ) )
-				)
-			) {
+			if ( true === $util->plugin_is_active( null, 'pmpro_changeMembershipLevel' ) && 0 === $level_id && ( is_page( $pmpro_pages['cancel'] ) || ( is_admin() && ( empty( $from ) || 'profile' != $from ) ) ) ) {
 				
 				// Search the databas for the most recent order object
 				$order = new \MemberOrder();
@@ -458,138 +517,138 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 					return false;
 				}
 				
-				if ( WP_DEBUG ) {
-					error_log( "Most recent member order: " . print_r( $order, true ) );
-				}
+                $util->log( "Most recent member order: " . print_r( $order, true ) );
 				
-				if ( false === ( $trial_ends = $util->is_in_trial( $user_id, $order->membership_id ) ) ) {
-					
-					// Fetch the most recent membership level definition for the user
-					$sql = $wpdb->prepare( "SELECT *
+				// Fetch the most recent membership level definition for the user
+				$sql = $wpdb->prepare( "SELECT *
                     FROM {$wpdb->pmpro_memberships_users}
                     WHERE membership_id = %d
                         AND user_id = %d
-                        AND status = %s
                     ORDER BY id DESC
                     LIMIT 1",
-						intval( $order->membership_id ),
-						intval( $user_id ),
-						'active'
+					intval( $order->membership_id ),
+					intval( $user_id )
+				);
+				
+				$level = $wpdb->get_row( $sql );
+				
+                $util->log( "Last membership level for {$user_id}: " . print_r( $level, true ) );
+				
+				// Return error if the last level wasn't a recurring one
+				if ( ! isset( $level->cycle_number ) || ( isset( $level->cycle_number) && $level->cycle_number < 1 ) ) {
+					$util->log("No membership level found for user {$user_id}");
+				    return false;
+				}
+				
+				// Return error if there's no level found
+				if ( ! isset( $level->id ) || empty( $level ) ) {
+					return false;
+				}
+				
+				// Format the date string for the the last time the order was processed
+				$lastdate = date_i18n( "Y-m-d", $order->timestamp );
+				
+				/**
+				 * Find the timestamp indicating when the next payment is supposed to occur
+				 * For PayPal Express and Stripe, we'll use their native gateway look-up functionality
+				 */
+				if ( ! empty( $pmpro_next_payment_timestamp ) ) {
+					
+					// Stripe or PayPal would have configured this global
+					$next_payment = $pmpro_next_payment_timestamp;
+					
+				} else if ( $level->cycle_number > 0 && ! empty( $level->cycle_period ) && empty( $pmpro_next_payment_timestamp ) ) {
+					
+					// Calculate when the next scheduled payment is estimated to happen
+					$nextdate_sql = $wpdb->prepare(
+						"SELECT UNIX_TIMESTAMP( %s + INTERVAL %d {$level->cycle_period})",
+						$lastdate,
+						intval( $level->cycle_number )
 					);
 					
-					$level = $wpdb->get_row( $sql );
+					$next_payment = $wpdb->get_var( $nextdate_sql );
 					
-					if ( WP_DEBUG ) {
-						error_log( "Last membership level for {$user_id}: " . print_r( $level, true ) );
-					}
+				} else {
 					
-					// Return error if the last level wasn't a recurring one
-					if ( ! isset( $level->cycle_number ) && $level->cycle_number < 1 ) {
-						return false;
-					}
-					
-					// Return error if there's no level found
-					if ( ! isset( $level->id ) || empty( $level ) ) {
-						return false;
-					}
-					
-					// Format the date string for the the last time the order was processed
-					$lastdate = date_i18n( "Y-m-d", $order->timestamp );
-					
-					/**
-					 * Find the timestamp indicating when the next payment is supposed to occur
-					 * For PayPal Express and Stripe, we'll use their native gateway look-up functionality
-					 */
-					if ( ! empty( $pmpro_next_payment_timestamp ) ) {
-						
-						// Stripe or PayPal would have configured this global
-						$next_payment = $pmpro_next_payment_timestamp;
-						
-					} else if ( $level->cycle_number > 0 && ! empty( $level->cycle_period ) && empty( $pmpro_next_payment_timestamp ) ) {
-						
-						// TODO: Handle situations where the Utilities::is_in_trial( $user_id, $level_id ) === true!
-						
-						// Calculate when the next scheduled payment is estimated to happen
-						$nextdate_sql = $wpdb->prepare( "SELECT UNIX_TIMESTAMP( %s + INTERVAL %d {$level->cycle_period})",
-							$lastdate,
-							intval( $level->cycle_number )
-						);
-						
-						$next_payment = $wpdb->get_var( $nextdate_sql );
+					if ( false !== ( $next_payment = $util->is_in_trial( $user_id, $level_id ) ) ) {
+						$util->log( "Using the end of the trial period as the enddate for this user's ({$user_id}) membership ({$level_id})" );
 						
 					} else {
+						
+						$util->log( "Absolutely no recurring payment info was found and no trial membership configured!" );
 						
 						// No recurring payment info found!
 						return false;
 					}
+				}
+				
+				if ( WP_DEBUG ) {
+					error_log( "Next payment date for {$user_id} should be: {$next_payment}" );
+				}
+				
+				/**
+				 * Process this if the next payment date is in the future
+				 */
+				if ( $next_payment - current_time( 'timestamp' ) > 0 ) {
 					
-					if ( WP_DEBUG ) {
-						error_log( "Next payment date for {$user_id} should be: {$next_payment}" );
-					}
-					
-					/**
-					 * Process this if the next payment date is in the future
-					 */
-					if ( $next_payment - current_time( 'timestamp' ) > 0 ) {
-						
-						// Fetch their previous membership level info
-						$old_level_sql = $wpdb->prepare( "
+					// Fetch their previous membership level info
+					$old_level_sql = $wpdb->prepare( "
                         SELECT *
                         FROM {$wpdb->pmpro_memberships_users}
                         WHERE membership_id = %d
                             AND user_id = %d
-                            AND status = %s
                         ORDER BY id DESC
                         LIMIT 1",
-							intval( $order->membership_id ),
-							intval( $user_id ),
-							'active'
-						);
+						intval( $order->membership_id ),
+						intval( $user_id )
+					);
+					
+					$old_level = $wpdb->get_row( $old_level_sql, ARRAY_A );
+					
+					// TODO: Handle situations where the Utilities::is_in_trial( $user_id, $level_id ) === true!
+					
+					// Only makes sense to do this if the user has an old payment level.
+					if ( ! empty( $old_level ) && ! empty( $next_payment ) ) {
 						
-						$old_level = $wpdb->get_row( $old_level_sql, ARRAY_A );
+						$old_level['enddate'] = date_i18n( "Y-m-d H:i:s", $next_payment );
 						
-						// TODO: Handle situations where the Utilities::is_in_trial( $user_id, $level_id ) === true!
+						$util->log("Setting termination of membership to (date): {$old_level['enddate']}");
 						
-						// Only makes sense to do this if the user has an old payment level.
-						if ( ! empty( $old_level ) ) {
+						// Remove action so we won't cause ourselves to loop indefinitely (or for 255 loops, whichever comes first).
+						remove_action( 'pmpro_after_change_membership_level', array(
+							$this,
+							'after_change_membership_level',
+						), 10, 2 );
+						
+						// Remove action in case it's here.
+						if ( function_exists( 'my_pmpro_cancel_previous_subscriptions' ) &&
+						     has_filter( 'pmpro_cancel_previous_subscriptions', 'my_pmpro_cancel_previous_subscriptions' )
+						) {
 							
-							$old_level['enddate'] = date_i18n( "Y-m-d H:i:s", $next_payment );
+							remove_filter( 'pmpro_cancel_previous_subscriptions', 'my_pmpro_cancel_previous_subscriptions' );
+						}
+						
+						// Change the membership level for the user to the new "old level"
+						pmpro_changeMembershipLevel( $old_level, $user_id );
+						
+						// Reattach this action (function)
+						add_action( 'pmpro_after_change_membership_level', array(
+							$this,
+							'after_change_membership_level',
+						), 10, 2 );
+						
+						// Add the backwards compatible filter (if it exists)
+						if ( ! has_filter( 'pmpro_cancel_previous_subscriptions', 'my_pmpro_cancel_previous_subscriptions' ) &&
+						     function_exists( 'my_pmpro_cancel_previous_subscriptions' )
+						) {
 							
-							// Remove action so we won't cause ourselves to loop indefinitely (or for 255 loops, whichever comes first).
-							remove_action( 'pmpro_after_change_membership_level', array(
-								$this,
-								'after_change_membership_level',
-							), 10, 2 );
-							
-							// Remove action in case it's here.
-							if ( function_exists( 'my_pmpro_cancel_previous_subscriptions' ) &&
-							     has_filter( 'pmpro_cancel_previous_subscriptions', 'my_pmpro_cancel_previous_subscriptions' )
-							) {
-								
-								remove_filter( 'pmpro_cancel_previous_subscriptions', 'my_pmpro_cancel_previous_subscriptions' );
-							}
-							
-							// Change the membership level for the user to the new "old level"
-							pmpro_changeMembershipLevel( $old_level, $user_id );
-							
-							// Reattach this action (function)
-							add_action( 'pmpro_after_change_membership_level', array(
-								$this,
-								'after_change_membership_level',
-							), 10, 2 );
-							
-							// Add the backwards compatible filter (if it exists)
-							if ( ! has_filter( 'pmpro_cancel_previous_subscriptions', 'my_pmpro_cancel_previous_subscriptions' ) &&
-							     function_exists( 'my_pmpro_cancel_previous_subscriptions' )
-							) {
-								
-								add_filter( 'pmpro_cancel_previous_subscriptions', 'my_pmpro_cancel_previous_subscriptions' );
-							}
-							
-							// Change the cancelleation message shown on cancel confirmation page
-							add_filter( 'gettext', array( $this, 'change_cancel_text' ), 10, 3 );
-						} // End of 'only makes sense if user has old membership level
-					}
+							add_filter( 'pmpro_cancel_previous_subscriptions', 'my_pmpro_cancel_previous_subscriptions' );
+						}
+						
+						// Change the cancelleation message shown on cancel confirmation page
+						add_filter( 'gettext', array( $this, 'change_cancel_text' ), 10, 3 );
+						
+					} // End of 'only makes sense if user has old membership level
 				}
 				
 			}
@@ -614,7 +673,7 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 			if ( function_exists( 'pmpro_next_payment' ) && ( 'pmpro' === $domain || 'paid-memberships-pro' === $domain ) && 'Your membership has been cancelled.' === $text ) {
 				
 				$next_payment_date = date_i18n( get_option( "date_format" ), pmpro_next_payment( $current_user->ID, "cancelled" ) );
-				$translated_text   = sprintf( __( "Your subscription has been cancelled. Your access will expire on %s", E20R_Member_Cancellation::plugin_slug ), $next_payment_date );
+				$translated_text   = sprintf( __( "Your %s has been cancelled. Your access will expire on %s", E20R_Member_Cancellation_Policy::plugin_slug ), strtolower( $this->subscription_label_singular ), $next_payment_date );
 			}
 			
 			return $translated_text;
@@ -624,7 +683,7 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 		 * Update the body of the email message on cancellation to reflect the actual cancellation date for the subscription
 		 *
 		 * @param   string     $body  - Body of the email message
-		 * @param   PMProEmail $email - The PMPro Email object
+		 * @param   \PMProEmail $email - The PMPro Email object
 		 *
 		 * @return  string          - The new body of the email message
 		 */
@@ -640,14 +699,14 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 				
 				if ( ! empty( $user->ID ) ) {
 					
-					$expiration_date = pmpro_next_payment( $user->ID );
+					$expiration_date = pmpro_next_payment( $user->ID, 'cancelled' );
 					
 					//if the date in the future?
 					if ( $expiration_date - time() > 0 ) {
 						
 						$enddate = date_i18n( get_option( "date_format" ), $expiration_date );
 						
-						$body .= "<p>" . sprintf( __( "Your subscription has been cancelled. Your access will expire on %s", E20R_Member_Cancellation::plugin_slug ), $enddate ) . "</p>";
+						$body .= "<p>" . sprintf( __( "Your %s has been cancelled. Your access will expire on %s", E20R_Member_Cancellation_Policy::plugin_slug ), strtolower( $this->subscription_label_singular ), $enddate ) . "</p>";
 					}
 				}
 			}
@@ -668,12 +727,11 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 			if ( false === strpos( $class_name, 'E20R' ) ) {
 				return;
 			}
-			
-			error_log( "Loading: {$class_name}" );
+   
 			$parts = explode( '\\', $class_name );
 			$name  = strtolower( preg_replace( '/_/', '-', $parts[ ( count( $parts ) - 1 ) ] ) );
 			
-			$base_path = plugin_dir_path( __FILE__ ) . 'class';
+			$base_path = plugin_dir_path( __FILE__ );
 			$filename  = "class.{$name}.php";
 			
 			// For the E20R\Member_Cancellation namespace
@@ -682,21 +740,25 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation' ) ) {
 			}
 			
 			// For the E20R\Member_Cancellation\Utilities namespace
-			if ( file_exists( "{$base_path}/utilities/{$filename}" ) ) {
-				require_once( "{$base_path}/utilities/{$filename}" );
+			if ( file_exists( "{$base_path}/class/utilities/{$filename}" ) ) {
+				require_once( "{$base_path}/class/utilities/{$filename}" );
 			}
 			
 			// For the E20R\Licensing namespace
-			if ( file_exists( "{$base_path}/licensing/{$filename}" ) ) {
-				require_once( "{$base_path}/licensing/{$filename}" );
+			if ( file_exists( "{$base_path}/class/licensing/{$filename}" ) ) {
+				require_once( "{$base_path}/class/licensing/{$filename}" );
 			}
 		}
 	}
 }
+
+// Init the autoloader method for this plugin
+spl_autoload_register( 'E20R\\Member_Cancellation\\E20R_Member_Cancellation_Policy::auto_loader' );
+
 /**
- * Load this plugin
+ * Load the plugin
  */
-add_action( 'plugins_loaded', 'E20R_Member_Cancellation::register', 5 );
+add_action( 'plugins_loaded', array( E20R_Member_Cancellation_Policy::get_instance(), 'register' ), 5 );
 
 if ( ! class_exists( '\PucFactory' ) ) {
 	require_once( plugin_dir_path( __FILE__ ) . 'plugin-updates/plugin-update-checker.php' );
