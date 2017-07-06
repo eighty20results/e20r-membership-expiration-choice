@@ -1,1 +1,19 @@
-ENHANCEMENT/FIX: Change the Account "Expiration" header to "Ends" if the policy is "end of period" and the user's membership has an enddate
+BUG FIX: Would not always load the correct membership record
+ENHANCEMENT: Avoid double-loading class on init
+ENHANCEMENT: Added filters to allow replacement of "subscription" (singular) and "subscriptions" (plural) strings (e20r-member-cancellation-subscription-label-singular and e20r-member-cancellation-subscription-label-plural filters)
+ENHANCEMENT: Allow singleton pattern for class (not required)
+ENHANCEMENT: Allow caching of Membership Level definition per user ID
+ENHANCEMENT: Renamed main class for plugin (WordPress Code style compliance & autoloader simplicity)
+ENHANCEMENT: Temporarily remove ability to configure deletion of inactive member accounts
+ENHANCEMENT: Use properly sanitized REQUEST variables
+ENHANCEMENT: Use autoloader for plugin
+ENHANCEMENT: Added debug statements to help isolate potential issues
+ENHANCEMENT: Add caching and utilities classes
+ENHANCEMENT: Add namespace for plugin
+ENHANCEMENT: Refactor namespace
+ENHANCEMENT: Use licensing logic in plugin
+ENHANCEMENT: Added placeholder for option to delete inactive (expired members) users from system
+ENHANCEMENT: Use plugin slug constant for translations
+ENHANCEMENT: Initial work to support trial periods and setting the enddate for the membership if cancelled to the last day of the trial.
+ENHANCEMENT: Add autoloader function
+ENHANCEMENT: Add new class directory to build script
