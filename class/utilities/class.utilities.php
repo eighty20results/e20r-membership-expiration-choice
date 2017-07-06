@@ -184,6 +184,7 @@ if ( ! class_exists( 'E20R\Member_Cancellation\Utilities\Utilities' ) ) {
 		public function is_in_trial( $user_id, $level_id ) {
 			
 			global $wpdb;
+			$this->log("Processing trial test for {$user_id} and {$level_id}");
 			
 			// Get the most recent (active) membership level record for the specified user/membership level ID
 			$sql = $wpdb->prepare(
@@ -191,18 +192,19 @@ if ( ! class_exists( 'E20R\Member_Cancellation\Utilities\Utilities' ) ) {
                      FROM {$wpdb->pmpro_memberships_users} AS mu
                      WHERE mu.user_id = %d
                           AND mu.membership_id = %d
-                          AND mu.status = %s
                      ORDER BY mu.id DESC
                      LIMIT 1",
 				$user_id,
-				$level_id,
-				'active'
+				$level_id
 			);
 			
 			$start_ts = intval( $wpdb->get_var( $sql ) );
 			
+			$this->log("Found start Timestamp: {$start_ts}");
+			
 			// No record found for specified user, so can't be in a trial...
 			if ( empty( $start_ts ) ) {
+			    $this->log("No start time found for {$user_id}, {$level_id}: {$wpdb->last_error}");
 				return false;
 			}
 			
