@@ -15,7 +15,7 @@ namespace cli;
 use cli\Streams;
 
 /**
- * The `Notify` class is the basis of all feedback classes, such as Indicators
+ * The `Notify` class is the basis of all feedback class, such as Indicators
  * and Progress meters. The default behaviour is to refresh output after 100ms
  * have passed. This is done to preventing the screen from flickering and keep
  * slowdowns from output to a minimum.

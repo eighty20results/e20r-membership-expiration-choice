@@ -6,7 +6,7 @@
 use \WP_CLI\Utils;
 
 /**
- * Stores the location of the WordPress directory of functions, classes, and core content.
+ * Stores the location of the WordPress directory of functions, class, and core content.
  *
  * @since 1.0.0
  */

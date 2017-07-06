@@ -1404,7 +1404,7 @@ if ( !class_exists('PucUpgraderStatus_3_1', false) ):
  * A utility class that helps figure out which plugin WordPress is upgrading.
  *
  * It may seem strange to have an separate class just for that, but the task is surprisingly complicated.
- * Core classes like Plugin_Upgrader don't expose the plugin file name during an in-progress update (AFAICT).
+ * Core class like Plugin_Upgrader don't expose the plugin file name during an in-progress update (AFAICT).
  * This class uses a few workarounds and heuristics to get the file name.
  */
 class PucUpgraderStatus_3_1 {
@@ -1546,13 +1546,13 @@ endif;
 if ( !class_exists('PucFactory', false) ):
 
 /**
- * A factory that builds instances of other classes from this library.
+ * A factory that builds instances of other class from this library.
  *
  * When multiple versions of the same class have been loaded (e.g. PluginUpdateChecker 1.2
  * and 1.3), this factory will always use the latest available version. Register class
  * versions by calling {@link PucFactory::addVersion()}.
  *
- * At the moment it can only build instances of the PluginUpdateChecker class. Other classes
+ * At the moment it can only build instances of the PluginUpdateChecker class. Other class
  * are intended mainly for internal use and refer directly to specific implementations. If you
  * want to instantiate one of them anyway, you can use {@link PucFactory::getLatestClassVersion()}
  * to get the class name and then create it with <code>new $class(...)</code>.
@@ -1634,7 +1634,7 @@ endif;
 
 require_once(dirname(__FILE__) . '/github-checker.php');
 
-//Register classes defined in this file with the factory.
+//Register class defined in this file with the factory.
 PucFactory::addVersion('PluginUpdateChecker', 'PluginUpdateChecker_3_1', '3.1');
 PucFactory::addVersion('PluginUpdate', 'PluginUpdate_3_1', '3.1');
 PucFactory::addVersion('PluginInfo', 'PluginInfo_3_1', '3.1');

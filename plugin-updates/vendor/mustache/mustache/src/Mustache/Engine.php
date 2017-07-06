@@ -114,7 +114,7 @@ class Mustache_Engine
      *         // available as well:
      *         'logger' => new Mustache_Logger_StreamLogger('php://stderr'),
      *
-     *         // Only treat Closure instances and invokable classes as callable. If true, values like
+     *         // Only treat Closure instances and invokable class as callable. If true, values like
      *         // `array('ClassName', 'methodName')` and `array($classInstance, 'methodName')`, which are traditionally
      *         // "callable" in PHP, are not called to resolve variables for interpolation or section contexts. This
      *         // helps protect against arbitrary code execution when user input is passed directly into the template.

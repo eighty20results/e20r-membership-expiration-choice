@@ -3,7 +3,7 @@
 // First, include Requests
 include('../library/Requests.php');
 
-// Next, make sure Requests can load internal classes
+// Next, make sure Requests can load internal class
 Requests::register_autoloader();
 
 // Set up our session

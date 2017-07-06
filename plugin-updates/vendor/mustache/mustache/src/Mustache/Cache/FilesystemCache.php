@@ -12,7 +12,7 @@
 /**
  * Mustache Cache filesystem implementation.
  *
- * A FilesystemCache instance caches Mustache Template classes from the filesystem by name:
+ * A FilesystemCache instance caches Mustache Template class from the filesystem by name:
  *
  *     $cache = new Mustache_Cache_FilesystemCache(dirname(__FILE__).'/cache');
  *     $cache->cache($className, $compiledSource);

@@ -30,7 +30,7 @@ use Symfony\Component\Finder\Iterator\SortableIterator;
 /**
  * Finder allows to build rules to find files and directories.
  *
- * It is a thin wrapper around several specialized iterator classes.
+ * It is a thin wrapper around several specialized iterator class.
  *
  * All rules may be invoked several times.
  *

@@ -7,7 +7,7 @@ class Shell_Command extends \WP_CLI_Command {
 	 *
 	 * ## DESCRIPTION
 	 *
-	 * `wp shell` allows you to evaluate PHP statements and expressions interactively, from within a WordPress environment. This means that you have access to all the functions, classes and globals that you would have access to from inside a WordPress plugin, for example.
+	 * `wp shell` allows you to evaluate PHP statements and expressions interactively, from within a WordPress environment. This means that you have access to all the functions, class and globals that you would have access to from inside a WordPress plugin, for example.
 	 *
 	 * ## OPTIONS
 	 *

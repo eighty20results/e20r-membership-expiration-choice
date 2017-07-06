@@ -52,7 +52,7 @@ class Mustache_Autoloader
     }
 
     /**
-     * Autoload Mustache classes.
+     * Autoload Mustache class.
      *
      * @param string $class
      */

@@ -17,7 +17,7 @@
  *     $ bin/build_bootstrap.php
  *
  * ... will create a `mustache.php` bootstrap file in the project directory,
- * containing all Mustache library classes. This file can then be included in
+ * containing all Mustache library class. This file can then be included in
  * your project, rather than requiring the Mustache Autoloader.
  */
 $baseDir = realpath(dirname(__FILE__) . '/..');
@@ -92,9 +92,9 @@ class SymfonyClassCollectionLoader
 EOS;
 
     /**
-     * Loads a list of classes and caches them in one big file.
+     * Loads a list of class and caches them in one big file.
      *
-     * @param array  $classes   An array of classes to load
+     * @param array  $classes   An array of class to load
      * @param string $cacheDir  A cache directory
      * @param string $name      The cache name prefix
      * @param string $extension File extension of the resulting file

@@ -215,7 +215,7 @@ class Menu_Item_Command extends WP_CLI_Command {
 	 * * target
 	 * * attr_title
 	 * * description
-	 * * classes
+	 * * class
 	 * * xfn
 	 *
 	 * ## EXAMPLES
@@ -274,8 +274,8 @@ class Menu_Item_Command extends WP_CLI_Command {
 	 * [--target=<target>]
 	 * : Set a custom link target for the menu item
 	 *
-	 * [--classes=<classes>]
-	 * : Set a custom link classes for the menu item
+	 * [--class=<class>]
+	 * : Set a custom link class for the menu item
 	 *
 	 * [--position=<position>]
 	 * : Specify the position of this menu item.
@@ -332,8 +332,8 @@ class Menu_Item_Command extends WP_CLI_Command {
 	 * [--target=<target>]
 	 * : Set a custom link target for the menu item
 	 *
-	 * [--classes=<classes>]
-	 * : Set a custom link classes for the menu item
+	 * [--class=<class>]
+	 * : Set a custom link class for the menu item
 	 *
 	 * [--position=<position>]
 	 * : Specify the position of this menu item.
@@ -385,8 +385,8 @@ class Menu_Item_Command extends WP_CLI_Command {
 	 * [--target=<target>]
 	 * : Set a custom link target for the menu item
 	 *
-	 * [--classes=<classes>]
-	 * : Set a custom link classes for the menu item
+	 * [--class=<class>]
+	 * : Set a custom link class for the menu item
 	 *
 	 * [--position=<position>]
 	 * : Specify the position of this menu item.
@@ -433,8 +433,8 @@ class Menu_Item_Command extends WP_CLI_Command {
 	 * [--target=<target>]
 	 * : Set a custom link target for the menu item
 	 *
-	 * [--classes=<classes>]
-	 * : Set a custom link classes for the menu item
+	 * [--class=<class>]
+	 * : Set a custom link class for the menu item
 	 *
 	 * [--position=<position>]
 	 * : Specify the position of this menu item.
@@ -524,7 +524,7 @@ class Menu_Item_Command extends WP_CLI_Command {
 				'parent-id'    => $menu_item_obj->menu_item_parent,
 				'attr-title'   => $menu_item_obj->attr_title,
 				'target'       => $menu_item_obj->target,
-				'classes'      => implode( ' ', $menu_item_obj->classes ), // stored in the database as array
+				'class'      => implode( ' ', $menu_item_obj->classes ), // stored in the database as array
 				'xfn'          => $menu_item_obj->xfn,
 				'status'       => $menu_item_obj->post_status,
 				);
@@ -541,7 +541,7 @@ class Menu_Item_Command extends WP_CLI_Command {
 				'parent-id'    => 0,
 				'attr-title'   => '',
 				'target'       => '',
-				'classes'      => '',
+				'class'      => '',
 				'xfn'          => '',
 				// Core oddly defaults to 'draft' for create,
 				// and 'publish' for update
