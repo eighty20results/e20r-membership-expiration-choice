@@ -23,11 +23,11 @@
 #
 short_name="e20r-member-cancellation-policy"
 server="eighty20results.com"
-include=(css classes languages LICENSES plugin-updates class.${short_name}.php readme.txt)
+include=(css class languages LICENSES plugin-updates class.${short_name}.php readme.txt)
 exclude=(*.yml *.phar composer.* vendor)
 build=(plugin-updates/vendor/*.php)
 plugin_path="${short_name}"
-version=$(egrep "^Version:" ../${short_name}.php | sed 's/[[:alpha:]|(|[:space:]|\:]//g' | awk -F- '{printf "%s", $1}')
+version=$(egrep "^Version:" ../class.${short_name}.php | sed 's/[[:alpha:]|(|[:space:]|\:]//g' | awk -F- '{printf "%s", $1}')
 metadata="../metadata.json"
 src_path="../"
 dst_path="../build/${plugin_path}"
