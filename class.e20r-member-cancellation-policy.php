@@ -3,7 +3,7 @@
 Plugin Name: E20R Member Cancellation Policy for Paid Memberships Pro
 Plugin URI: http://eighty20results.com/wordpress-plugins/e20r-member-cancellation-policy
 Description: Adds a membership level setting to configure how PMPro will handle membership cancellations.
-Version: 1.4
+Version: 1.5
 Requires: 4.7
 Author: Thomas Sjolshagen <thomas@eighty20results.com>
 Author URI: http://www.eighty20results.com/thomas-sjolshagen/
@@ -34,7 +34,7 @@ namespace E20R\Member_Cancellation;
 
 use E20R\Member_Cancellation\Utilities\Utilities;
 
-define( 'E20R_MEMBER_CANCELLATION_POLICY', '1.4' );
+define( 'E20R_MEMBER_CANCELLATION_POLICY', '1.5' );
 
 if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation_Policy' ) ) {
 	class E20R_Member_Cancellation_Policy {

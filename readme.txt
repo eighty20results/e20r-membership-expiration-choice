@@ -3,7 +3,7 @@ Contributors: sjolshagen
 Tags: pmpro, paid memberships pro, members, memberships, membership cancellation choice, membership cancellation policy
 Requires at least: 4.7
 Tested up to: 4.8
-Stable tag: 1.4
+Stable tag: 1.5
 
 Adds a membership level setting to configure how PMPro will handle member cancellations.
 
@@ -20,6 +20,12 @@ on a per-membership level basis via the Membership Level settings.
 1. Edit your membership levels and set the Membership Cancellation Policy option for each level.
 
 == Changelog == 
+
+== 1.5 ==
+
+* ENHANCEMENT: Upgraded Utilities class (1.6)
+* ENHANCEMENT: Added is_in_trial() method which includes support for Subscription Delays add-on & native trial periods
+* BUG FIX: Could excessively nest when sanitizing array values
 
 == 1.4 ==
 
