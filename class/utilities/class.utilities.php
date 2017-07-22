@@ -16,16 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @version 1.3
+ * @version 1.6
  */
 
 namespace E20R\Member_Cancellation\Utilities;
 
 // Disallow direct access to the class definition
-use E20R\Member_Cancellation\E20R_Member_Cancellation;
+use E20R\Member_Cancellation\E20R_Member_Cancellation_Policy;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	wp_die( __( "Cannot access file directly", E20R_Member_Cancellation::plugin_slug ) );
+	wp_die( __( "Cannot access file directly", E20R_Member_Cancellation_Policy::plugin_slug ) );
 }
 
 if ( ! class_exists( 'E20R\Member_Cancellation\Utilities\Utilities' ) ) {
@@ -172,86 +172,7 @@ if ( ! class_exists( 'E20R\Member_Cancellation\Utilities\Utilities' ) ) {
 			
 			return false;
 		}
-		
-		/**
-		 * Test whether the user is in Trial mode (i.e. the user's startdate is configured as 'after' the current date/time
-		 *
-		 * @param int $user_id
-		 * @param int $level_id
-		 *
-		 * @return int|bool - Returns the Timestamp (seconds) of when the trial ends, or false if no trial was found
-		 */
-		public function is_in_trial( $user_id, $level_id ) {
-			
-			global $wpdb;
-			$this->log("Processing trial test for {$user_id} and {$level_id}");
-			
-			// Get the most recent (active) membership level record for the specified user/membership level ID
-			$sql = $wpdb->prepare(
-				"SELECT UNIX_TIMESTAMP( mu.startdate ) AS start_date
-                     FROM {$wpdb->pmpro_memberships_users} AS mu
-                     WHERE mu.user_id = %d
-                          AND mu.membership_id = %d
-                     ORDER BY mu.id DESC
-                     LIMIT 1",
-				$user_id,
-				$level_id
-			);
-			
-			$start_ts = intval( $wpdb->get_var( $sql ) );
-			
-			$this->log("Found start Timestamp: {$start_ts}");
-			
-			// No record found for specified user, so can't be in a trial...
-			if ( empty( $start_ts ) ) {
-			    $this->log("No start time found for {$user_id}, {$level_id}: {$wpdb->last_error}");
-				return false;
-			}
-			
-			$now = current_time( 'timestamp' );
-			
-			if ( true === $this->plugin_is_active( 'pmprosd_daysUntilDate' ) ) {
-				
-				$this->log( "The PMPro Subscription Delays add-on is active on this system" );
-				
-				// Is the user record in 'pre-start' mode (i.e. using Subscription Delay add-on)
-				if ( ! empty( $start_ts ) && $start_ts <= $now ) {
-					
-					$this->log( "User ({$user_id}) at membership level ({$level_id}) is currently in 'trial' mode: {$start_ts} <= {$now}" );
-					
-					return $start_ts;
-				}
-			} else if ( true === $this->plugin_is_active( 'paid-memberships-pro/paid-memberships-pro.php', 'pmpro_getMembershipLevelForUser' ) ) {
-				
-				$this->log( "No trace of the 'Subscription Delays' add-on..." );
-				
-				$user_level = pmpro_getMembershipLevelForUser( $user_id );
-				
-				// Is there a trial period defined for this user?
-				if ( ! empty( $user_level->cycle_number ) && ! empty( $user_level->trial_limit ) ) {
-					
-					$trial_duration = $user_level->cycle_number * $user_level->trial_limit;
-					$start_date     = date( 'Y-m-d H:i:s', $start_ts );
-					$trial_ends_ts  = strtotime( "{$start_date} + {$trial_duration} {$user_level->cycle_period}" );
-					
-					if ( false !== $trial_ends_ts && $trial_ends_ts >= $now ) {
-						$this->log( "User {$user_id} is in their current trial period for level {$level_id}: It ends at {$trial_ends_ts} which is >= {$now} " );
-						
-						return $trial_ends_ts;
-					} else {
-					    $this->log("There was a problem converting the trial period info into a timestamp!" );
-                    }
-				} else {
-					$this->log( "No Trial period defined for user..." );
-				}
-				
-			} else {
-				$this->log( "Neither PMPro nor Subscription Delays add-on is installed and active!!" );
-			}
-			
-			return false;
-		}
-		
+  
 		/**
 		 * Return last message of a specific type
 		 *
@@ -357,7 +278,7 @@ if ( ! class_exists( 'E20R\Member_Cancellation\Utilities\Utilities' ) ) {
 		}
 		
 		/**
-		 * Idenitfy the calling function (used in debug logger
+		 * Identify the calling function (used in debug logger
 		 *
 		 * @return array|string
 		 *
@@ -530,6 +451,85 @@ if ( ! class_exists( 'E20R\Member_Cancellation\Utilities\Utilities' ) ) {
 		}
 		
 		/**
+		 * Test whether the user is in Trial mode (i.e. the user's startdate is configured as 'after' the current date/time
+		 *
+		 * @param int $user_id
+		 * @param int $level_id
+		 *
+		 * @return int|bool - Returns the Timestamp (seconds) of when the trial ends, or false if no trial was found
+		 */
+		public function is_in_trial( $user_id, $level_id ) {
+			
+			global $wpdb;
+			$this->log("Processing trial test for {$user_id} and {$level_id}");
+			
+			// Get the most recent (active) membership level record for the specified user/membership level ID
+			$sql = $wpdb->prepare(
+				"SELECT UNIX_TIMESTAMP( mu.startdate ) AS start_date
+                     FROM {$wpdb->pmpro_memberships_users} AS mu
+                     WHERE mu.user_id = %d
+                          AND mu.membership_id = %d
+                     ORDER BY mu.id DESC
+                     LIMIT 1",
+				$user_id,
+				$level_id
+			);
+			
+			$start_ts = intval( $wpdb->get_var( $sql ) );
+			
+			$this->log("Found start Timestamp: {$start_ts}");
+			
+			// No record found for specified user, so can't be in a trial...
+			if ( empty( $start_ts ) ) {
+				$this->log("No start time found for {$user_id}, {$level_id}: {$wpdb->last_error}");
+				return false;
+			}
+			
+			$now = current_time( 'timestamp' );
+			
+			if ( true === $this->plugin_is_active( 'pmprosd_daysUntilDate' ) ) {
+				
+				$this->log( "The PMPro Subscription Delays add-on is active on this system" );
+				
+				// Is the user record in 'pre-start' mode (i.e. using Subscription Delay add-on)
+				if ( ! empty( $start_ts ) && $start_ts <= $now ) {
+					
+					$this->log( "User ({$user_id}) at membership level ({$level_id}) is currently in 'trial' mode: {$start_ts} <= {$now}" );
+					
+					return $start_ts;
+				}
+			} else if ( true === $this->plugin_is_active( 'paid-memberships-pro/paid-memberships-pro.php', 'pmpro_getMembershipLevelForUser' ) ) {
+				
+				$this->log( "No trace of the 'Subscription Delays' add-on..." );
+				
+				$user_level = pmpro_getMembershipLevelForUser( $user_id );
+				
+				// Is there a trial period defined for this user?
+				if ( ! empty( $user_level->cycle_number ) && ! empty( $user_level->trial_limit ) ) {
+					
+					$trial_duration = $user_level->cycle_number * $user_level->trial_limit;
+					$start_date     = date( 'Y-m-d H:i:s', $start_ts );
+					$trial_ends_ts  = strtotime( "{$start_date} + {$trial_duration} {$user_level->cycle_period}" );
+					
+					if ( false !== $trial_ends_ts && $trial_ends_ts >= $now ) {
+						$this->log( "User {$user_id} is in their current trial period for level {$level_id}: It ends at {$trial_ends_ts} which is >= {$now} " );
+						
+						return $trial_ends_ts;
+					} else {
+						$this->log("There was a problem converting the trial period info into a timestamp!" );
+					}
+				} else {
+					$this->log( "No Trial period defined for user..." );
+				}
+				
+			} else {
+				$this->log( "Neither PMPro nor Subscription Delays add-on is installed and active!!" );
+			}
+			
+			return false;
+		}
+		
+		/**
 		 * Print a message to the WP_DEBUG logger if configured
 		 *
 		 * @param $msg
@@ -613,11 +613,6 @@ if ( ! class_exists( 'E20R\Member_Cancellation\Utilities\Utilities' ) ) {
 					} else {
 						$field = wp_kses_post( $field );
 					}
-				}
-				
-				if ( is_array( $field ) ) {
-					
-					$field = array_map( 'sanitize_text_field', $field );
 				}
 				
 			} else {
