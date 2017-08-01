@@ -115,6 +115,8 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation_Policy' 
 			add_action( 'pmpro_save_membership_level', array( $plugin, 'save_level_settings' ) );
 			add_action( 'pmpro_delete_membership_level', array( $plugin, 'delete_level_settings' ) );
 			
+			add_action( 'pmpro_membership_post_membership_expiry', array( $plugin, 'remove_expiration_meta'), 10, 2 );
+			
 			if ( true === $util->plugin_is_active( null, 'pmpro_changeMembershipLevel' ) ) {
 				
 				$plugin->set_user_level( $current_user->ID, pmpro_getMembershipLevelForUser( $current_user->ID ) );
@@ -191,11 +193,38 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation_Policy' 
 		 */
 		public function load_css() {
 			
+		    global $current_user;
+		    global $pmpro_pages;
+		    
 			if ( is_admin() ) {
 				wp_enqueue_style( 'e20r-member-cancellation-policy', plugins_url( 'css/e20r-member-cancellation-policy.css', __FILE__ ), null, E20R_MEMBER_CANCELLATION_POLICY );
 			}
+			
+			$is_cancelled = get_user_meta( $current_user->ID, 'e20r_membership_cancelled', true );
+			
+			// Hide "Cancel" link on account page if the user already cancelled the membership
+			if ( !empty( $is_cancelled) && is_page( $pmpro_pages['account']) ) {
+			    wp_enqueue_style( 'e20r-membership-cancelled', plugins_url( 'css/e20r-membership-cancelled.css', __FILE__ ), array( 'pmpro_frontend' ), E20R_MEMBER_CANCELLATION_POLICY );
+            }
 		}
 		
+		/**
+         * Action handler to clean up meta for this plugin/user combo for `pmpro_membership_post_membership_expiry` action
+         *
+		 * @param int $user_id
+		 * @param int $level_id
+		 */
+		public function remove_expiration_meta( $user_id, $level_id ) {
+		    
+		    $is_cancelled = get_user_meta( $user_id, 'e20r_membership_cancelled', true );
+			
+			// Clean up after ourselves
+		    if ( $is_cancelled == $level_id ) {
+		        
+		        delete_user_meta( $user_id, 'e20r_membership_cancelled', $level_id );
+            }
+        }
+        
 		/**
 		 * Save settings when saving membership level
 		 *
@@ -587,9 +616,7 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation_Policy' 
 					}
 				}
 				
-				if ( WP_DEBUG ) {
-					error_log( "Next payment date for {$user_id} should be: {$next_payment}" );
-				}
+				$util->log( "Next payment date for {$user_id} should be: {$next_payment}" );
 				
 				/**
 				 * Process this if the next payment date is in the future
@@ -652,6 +679,9 @@ if ( ! class_exists( 'E20R\Member_Cancellation\E20R_Member_Cancellation_Policy' 
 						
 						// Change the cancelleation message shown on cancel confirmation page
 						add_filter( 'gettext', array( $this, 'change_cancel_text' ), 10, 3 );
+						
+						// Save the level ID for the cancelled and now restored membership level
+						update_user_meta( $user_id, 'e20r_membership_cancelled', $old_level['id'] );
 						
 					} // End of 'only makes sense if user has old membership level
 				}
