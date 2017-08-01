@@ -3,15 +3,15 @@ Contributors: sjolshagen
 Tags: pmpro, paid memberships pro, members, memberships, membership cancellation choice, membership cancellation policy
 Requires at least: 4.7
 Tested up to: 4.8
-Stable tag: 1.6
+Stable tag: 1.7
 
 Adds a membership level setting to configure how PMPro will handle member cancellations.
 
 == Description ==
 
-By default, PMPro terminates the user's access to protected content immediately. This plugin will configure the membership to end at the end
-of the currently paid-for membership period by default. However, it's possible to change this default to "immediately"
-on a per-membership level basis via the Membership Level settings.
+By default, PMPro terminates the user's access to protected content immediately. This plugin will configure the membership to end at the termination
+of the currently paid-for membership period (new default). However, it's possible to change this policy to "immediately"
+on a per-membership level basis, via the Membership Level settings in the WordPress backend.
 
 == Installation ==
 
@@ -20,6 +20,13 @@ on a per-membership level basis via the Membership Level settings.
 1. Edit your membership levels and set the Membership Cancellation Policy option for each level.
 
 == Changelog == 
+
+== 1.7 ==
+
+* ENHANCEMENT: Add CSS file containing style to hide Cancel link if member cancelled membership already
+* ENHANCEMENT: Remove 'member cancelled this level' meta when membership is expired by Cron
+* ENHANCEMENT: Conditionally load custom CSS to hide 'Cancel' link on Accounts page
+* ENHANCEMENT: Track membership level being cancelled for the user (used by conditional CSS load)
 
 == 1.6 ==
 

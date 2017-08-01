@@ -1,5 +1,4 @@
-ENHANCEMENT: Use cache for membership end date & user ID map
-ENHANCEMENT: Refactor licensing domain initiation
-ENHANCEMENT: Added membership_ends() function for user ID -> enddate
-BUG FIX: Prevent fatal error during plugin upgrades
-BUG FIX: Didn't calculate end date (for messages & display) correctly
+ENHANCEMENT: Add CSS file containing style to hide Cancel link if member cancelled membership already
+ENHANCEMENT: Remove 'member cancelled this level' meta when membership is expired by Cron
+ENHANCEMENT: Conditionally load custom CSS to hide "Cancel" link on Accounts page
+ENHANCEMENT: Track membership level being cancelled for the user (used by conditional CSS load)
