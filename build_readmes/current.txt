@@ -1,4 +1,5 @@
-ENHANCEMENT: Upgraded Utilities class (1.6)
-ENHANCEMENT: Added is_in_trial() method which includes support for Subscription Delays add-on & native trial periods
-BUG FIX: Could excessively nest when sanitizing array values
-
+ENHANCEMENT: Use cache for membership end date & user ID map
+ENHANCEMENT: Refactor licensing domain initiation
+ENHANCEMENT: Added membership_ends() function for user ID -> enddate
+BUG FIX: Prevent fatal error during plugin upgrades
+BUG FIX: Didn't calculate end date (for messages & display) correctly
