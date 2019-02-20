@@ -2,8 +2,8 @@
 Contributors: sjolshagen
 Tags: pmpro, paid memberships pro, members, memberships, membership cancellation choice, membership cancellation policy
 Requires at least: 4.7
-Tested up to: 4.8
-Stable tag: 1.7
+Tested up to: 5.1
+Stable tag: 1.8
 
 Adds a membership level setting to configure how PMPro will handle member cancellations.
 
@@ -20,6 +20,10 @@ on a per-membership level basis, via the Membership Level settings in the WordPr
 1. Edit your membership levels and set the Membership Cancellation Policy option for each level.
 
 == Changelog == 
+
+== 1.8 ==
+
+* ENHANCEMENT: Updated copyright notice and now tested up to v5.1
 
 == 1.7 ==
 

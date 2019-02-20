@@ -1,4 +1,1 @@
-ENHANCEMENT: Add CSS file containing style to hide Cancel link if member cancelled membership already
-ENHANCEMENT: Remove 'member cancelled this level' meta when membership is expired by Cron
-ENHANCEMENT: Conditionally load custom CSS to hide "Cancel" link on Accounts page
-ENHANCEMENT: Track membership level being cancelled for the user (used by conditional CSS load)
+ENHANCEMENT: Updated copyright notice and now tested up to v5.1
