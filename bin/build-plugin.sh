@@ -61,10 +61,10 @@ done
 
 cd ${dst_path}/..
 zip -r ${kit_name}.zip ${plugin_path}
-ssh ${server} "cd ./www/protected-content/ ; mkdir -p \"${short_name}\""
-scp ${kit_name}.zip ${server}:./www/protected-content/${short_name}/
-scp ${metadata} ${server}:./www/protected-content/${short_name}/
-ssh ${server} "cd ./www/protected-content/ ; ln -sf \"${short_name}\"/\"${short_name}\"-\"${version}\".zip \"${short_name}\".zip"
+ssh ${server} "cd ./eighty20results.com/protected-content/ ; mkdir -p \"${short_name}\""
+scp ${kit_name}.zip ${server}:./eighty20results.com/protected-content/${short_name}/
+scp ${metadata} ${server}:./eighty20results.com/protected-content/${short_name}/
+ssh ${server} "cd ./eighty20results.com/protected-content/ ; ln -sf \"${short_name}\"/\"${short_name}\"-\"${version}\".zip \"${short_name}\".zip"
 rm -rf ${dst_path}
 
 
